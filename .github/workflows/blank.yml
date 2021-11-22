@@ -33,4 +33,4 @@ jobs:
       - name: Run a multi-line script
         run: |
           chmod +x *.sh
-          .runner_init.sh
+          ./runner_init.sh
