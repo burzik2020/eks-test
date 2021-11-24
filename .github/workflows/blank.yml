@@ -39,7 +39,7 @@ jobs:
         
       - name: Run-tfvalidate-command
         if: steps.Run-tfinit-command.outputs.exit_code == 0      
-        run: terraform validate
+        run: terraform validate -no-color
       
       - name: Run-tfplan-command
         if: steps.Run-tfvalidate-command.outputs.exit_code == 0      
