@@ -1,36 +1,47 @@
-# This is a basic workflow to help you get started with Actions
+name: CI-CD_pipeline
+env:
+  TFSTATE_S3_BUCKET_NAME : "cluster-state"
+  AWS_REGION_NAME        : "us-west-1"
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  ci-cd:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Git clone
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Run a runner init script
         run: |
-          chmod +x *.sh
-          ./runner_init.sh
+          export work_dir=`pwd`
+          chmod +x scripts/*.sh
+          ./scripts/runner-init.sh && cd $work_dir
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id    :  ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region           :  ${{ env.AWS_REGION_NAME }}      
+          
+      - name: Run-tfinit-command
+        run: terraform init
+        
+      - name: Run-tfvalidate-command
+        if: steps.Run-tfinit-command.outputs.exit_code == 0      
+        run: terraform validate
+      
+      - name: Run-tfplan-command
+        if: steps.Run-tfvalidate-command.outputs.exit_code == 0      
+        run: terraform plan -out tfplan
+        
+      - name: Run-tfapply-command
+        if: steps.Run-tfplan-command.outputs.exit_code == 0
+        run: terraform apply -input=false "tfplan"
