@@ -29,7 +29,10 @@ jobs:
         with:
           aws-access-key-id    :  ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region           :  ${{ env.AWS_REGION_NAME }}      
+          aws-region           :  ${{ env.AWS_REGION_NAME }}
+          
+      - name: Run-tffmt-command
+        run: terraform fmt -check
           
       - name: Run-tfinit-command
         run: terraform init
